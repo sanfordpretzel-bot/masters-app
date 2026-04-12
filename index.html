@@ -1,38 +1,116 @@
-<script>
-async function loadLeaderboard() {
-  const response = await fetch('data.json');
-  const players = await response.json();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masters App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .player-block {
+      margin-bottom: 18px;
+    }
+    .player-name a {
+      font-size: 20px;
+      font-weight: bold;
+      text-decoration: none;
+      color: black;
+    }
+    .meta {
+      color: #666;
+      margin-top: 4px;
+    }
+    .option-row {
+      margin-left: 40px;
+      margin-top: 4px;
+    }
+    .option-row a {
+      text-decoration: none;
+      color: #0066cc;
+    }
+    .error {
+      color: red;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Masters Leaderboard</h1>
+  <div id="leaderboard">Loading...</div>
 
-  const container = document.getElementById('leaderboard');
+  <script>
+    async function loadLeaderboard() {
+      const container = document.getElementById('leaderboard');
 
-  players.forEach(player => {
-    const n
-      
-    ame = player.name;
+      try {
+        const response = await fetch('data.json?v=' + Date.now());
+        if (!response.ok) {
+          throw new Error('Could not load data.json');
+        }
 
-    const block = document.createElement('div');
-    block.style.marginBottom = '15px';
+        const data = await response.json();
+        const players = data.players || [];
 
-    // Player name (Wikipedia link)
-    const title = document.createElement('div');
-    title.innerHTML = `<a href="https://en.wikipedia.org/wiki/${encodeURIComponent(name)}" target="_blank"><strong>${name}</strong></a>`;
-    block.appendChild(title);
+        if (!players.length) {
+          container.innerHTML = '<div class="error">No players found in data.json</div>';
+          return;
+        }
 
-    // Helper to create indented links
-    function createOption(label, query) {
-      const row = document.createElement('div');
-      row.style.marginLeft = '20px';
-      row.innerHTML = `<a href="https://www.google.com/search?q=${encodeURIComponent(query)}" target="_blank">${label}</a>`;
-      return row;
+        container.innerHTML = '';
+
+        players.forEach(player => {
+          const name = player.name || 'Unknown Player';
+          const position = player.position || '';
+          const score = player.score || '';
+          const thru = player.thru || '';
+
+          const block = document.createElement('div');
+          block.className = 'player-block';
+
+          const nameRow = document.createElement('div');
+          nameRow.className = 'player-name';
+          nameRow.innerHTML =
+            '<a href="https://en.wikipedia.org/wiki/Special:Search?search=' +
+            encodeURIComponent(name) +
+            '" target="_blank">' +
+            name +
+            '</a>';
+          block.appendChild(nameRow);
+
+          const metaRow = document.createElement('div');
+          metaRow.className = 'meta';
+          metaRow.textContent = 'Position: ' + position + ' | Score: ' + score + ' | Thru: ' + thru;
+          block.appendChild(metaRow);
+
+          function addOption(label, query) {
+            const row = document.createElement('div');
+            row.className = 'option-row';
+            row.innerHTML =
+              '<a href="https://www.google.com/search?q=' +
+              encodeURIComponent(query) +
+              '" target="_blank">' +
+              label +
+              '</a>';
+            block.appendChild(row);
+          }
+
+          addOption('Wife or GF', name + ' wife OR girlfriend');
+          addOption('Net worth', name + ' net worth');
+          addOption('Total PGA earnings', name + ' career PGA earnings');
+
+          container.appendChild(block);
+        });
+      } catch (err) {
+        container.innerHTML = '<div class="error">Error: ' + err.message + '</div>';
+      }
     }
 
-    block.appendChild(createOption("Wife or GF", name + " wife"));
-    block.appendChild(createOption("Net worth", name + " net worth"));
-    block.appendChild(createOption("Total PGA earnings", name + " PGA earnings"));
-
-    container.appendChild(block);
-  });
-}
-
-loadLeaderboard();
-</script>
+    loadLeaderboard();
+  </script>
+</body>
+</html>
