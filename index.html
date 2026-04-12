@@ -4,144 +4,172 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Masters Leaderboard</title>
-
 <style>
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
-  background: linear-gradient(#0b3d2e, #145a32, #f5f3e7);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(180deg, #0b3d2e 0%, #145a32 40%, #f5f3e7 100%);
 }
-
 .wrap {
-  max-width: 900px;
-  margin: auto;
+  max-width: 930px;
+  margin: 0 auto;
   padding: 20px;
 }
-
 h1 {
   color: white;
+  margin: 0 0 18px 0;
+  font-size: 32px;
 }
-
 .board {
   background: white;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
 }
-
 .header, .row {
   display: grid;
-  grid-template-columns: 60px 1fr 80px 80px;
-  padding: 12px;
+  grid-template-columns: 60px 1fr 90px 90px;
+  gap: 0;
+  padding: 12px 14px;
 }
-
 .header {
   background: #0f5132;
   color: white;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 700;
 }
-
 .player {
-  border-top: 1px solid #eee;
+  border-top: 1px solid #ececec;
 }
-
 .name a {
   text-decoration: none;
-  font-weight: bold;
   color: black;
+  font-weight: 700;
 }
-
 .score {
   text-align: right;
-  font-weight: bold;
+  font-weight: 700;
   color: #0f5132;
 }
-
 .thru {
   text-align: right;
   color: #666;
 }
-
 .option {
-  margin-left: 20px;
+  margin: 0 0 0 20px;
+  padding-bottom: 2px;
   font-size: 14px;
 }
-
 .option a {
   text-decoration: none;
   color: #0066cc;
 }
+.status {
+  color: #666;
+}
 </style>
 </head>
-
 <body>
 <div class="wrap">
-<h1>Masters Leaderboard</h1>
+  <h1>Masters Leaderboard</h1>
 
-<div class="board">
-<div class="header">
-<div>POS</div>
-<div>PLAYER</div>
-<div>SCORE</div>
-<div>THRU</div>
-</div>
-
-<div id="board">Loading...</div>
-</div>
+  <div class="board">
+    <div class="header">
+      <div>POS</div>
+      <div>PLAYER</div>
+      <div>SCORE</div>
+      <div>THRU</div>
+    </div>
+    <div id="board">Loading...</div>
+  </div>
 </div>
 
 <script>
-function parseScore(s) {
-  if (!s || s === "E") return 0;
-  return parseInt(s);
+function parseScoreValue(score) {
+  const s = String(score || "").trim().toUpperCase();
+
+  if (s === "CUT") return 10000;
+  if (s === "WD") return 10001;
+  if (s === "DQ") return 10002;
+  if (s === "MDF") return 10003;
+  if (s === "E") return 0;
+
+  const n = parseInt(s, 10);
+  return Number.isNaN(n) ? 9999 : n;
 }
 
-function parsePos(p) {
-  if (!p) return 999;
-  return parseInt(p.replace("T", "")) || 999;
+function parsePositionValue(position) {
+  const p = String(position || "").trim().toUpperCase().replace(/^T/, "");
+  const n = parseInt(p, 10);
+  return Number.isNaN(n) ? 9999 : n;
+}
+
+function displayPosition(player, index, sortedPlayers) {
+  const raw = String(player.position || "").trim();
+  if (raw) return raw;
+
+  const score = parseScoreValue(player.score);
+  if (score >= 9999) return "—";
+
+  let rank = 1;
+  for (let i = 0; i < index; i++) {
+    if (parseScoreValue(sortedPlayers[i].score) < score) {
+      rank++;
+    }
+  }
+
+  const prevScore = index > 0 ? parseScoreValue(sortedPlayers[index - 1].score) : null;
+  return prevScore === score ? "T" + rank : String(rank);
 }
 
 async function load() {
-  const res = await fetch('data.json?v=' + Date.now());
+  const res = await fetch("data.json?v=" + Date.now());
   const data = await res.json();
 
-  const players = (data.players || []).sort((a, b) => {
-    const scoreDiff = parseScore(a.score) - parseScore(b.score);
+  const players = (data.players || []).slice().sort((a, b) => {
+    const scoreDiff = parseScoreValue(a.score) - parseScoreValue(b.score);
     if (scoreDiff !== 0) return scoreDiff;
-    return parsePos(a.position) - parsePos(b.position);
+
+    const posDiff = parsePositionValue(a.position) - parsePositionValue(b.position);
+    if (posDiff !== 0) return posDiff;
+
+    return String(a.name || "").localeCompare(String(b.name || ""));
   });
 
-  const container = document.getElementById('board');
-  container.innerHTML = '';
+  const container = document.getElementById("board");
+  container.innerHTML = "";
 
-  players.forEach(p => {
-    const block = document.createElement('div');
-    block.className = 'player';
+  players.forEach((p, index) => {
+    const block = document.createElement("div");
+    block.className = "player";
 
-    const row = document.createElement('div');
-    row.className = 'row';
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const posText = displayPosition(p, index, players);
+    const thruText = p.thru || "—";
+    const scoreText = p.score || "—";
 
     row.innerHTML = `
-      <div>${p.position}</div>
+      <div>${posText}</div>
       <div class="name">
-        <a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(p.name)}" target="_blank">${p.name}</a>
+        <a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(p.name || "")}" target="_blank">${p.name || "Unknown Player"}</a>
       </div>
-      <div class="score">${p.score}</div>
-      <div class="thru">${p.thru}</div>
+      <div class="score ${parseScoreValue(scoreText) >= 9999 ? 'status' : ''}">${scoreText}</div>
+      <div class="thru">${thruText}</div>
     `;
 
     block.appendChild(row);
 
     function option(label, query) {
-      const div = document.createElement('div');
-      div.className = 'option';
+      const div = document.createElement("div");
+      div.className = "option";
       div.innerHTML = `<a href="https://www.google.com/search?q=${encodeURIComponent(query)}" target="_blank">${label}</a>`;
       block.appendChild(div);
     }
 
-    option("Wife or GF", p.name + " wife OR girlfriend");
-    option("Net worth", p.name + " net worth");
-    option("Total PGA earnings", p.name + " PGA earnings");
+    option("Wife or GF", (p.name || "") + " wife OR girlfriend");
+    option("Net worth", (p.name || "") + " net worth");
+    option("Total PGA earnings", (p.name || "") + " PGA earnings");
 
     container.appendChild(block);
   });
