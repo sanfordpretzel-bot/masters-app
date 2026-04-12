@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-12T19:01:43.501107+00:00",
+  "updated_at": "2026-04-12T19:30:10.001942+00:00",
   "source_name": "ESPN Masters leaderboard",
   "source_url": "https://www.espn.com/golf/leaderboard?season=2025&tournamentId=401811941",
   "note": "Auto-updated",
@@ -49,9 +49,9 @@
     {
       "position": "\u2014",
       "name": "Ben Griffin",
-      "score": "-5",
-      "today": "E",
-      "thru": "7"
+      "score": "-4",
+      "today": "+1",
+      "thru": "9"
     },
     {
       "position": "\u2014",
@@ -65,21 +65,21 @@
       "name": "Brian Campbell",
       "score": "-2",
       "today": "+1",
-      "thru": "11"
+      "thru": "12"
     },
     {
       "position": "\u2014",
       "name": "Brian Harman",
       "score": "E",
       "today": "+1",
-      "thru": "17"
+      "thru": "F"
     },
     {
       "position": "\u2014",
       "name": "Brooks Koepka",
       "score": "-3",
       "today": "+1",
-      "thru": "9"
+      "thru": "11"
     },
     {
       "position": "\u2014",
@@ -107,7 +107,7 @@
       "name": "Cameron Young",
       "score": "-12",
       "today": "-1",
-      "thru": "2"
+      "thru": "4"
     },
     {
       "position": "\u2014",
@@ -133,16 +133,16 @@
     {
       "position": "\u2014",
       "name": "Chris Gotterup",
-      "score": "-2",
-      "today": "+1",
-      "thru": "13"
+      "score": "-3",
+      "today": "E",
+      "thru": "16"
     },
     {
       "position": "\u2014",
       "name": "Collin Morikawa",
       "score": "-5",
       "today": "E",
-      "thru": "6"
+      "thru": "8"
     },
     {
       "position": "\u2014",
@@ -210,16 +210,16 @@
     {
       "position": "\u2014",
       "name": "Haotong Li",
-      "score": "-8",
-      "today": "-1",
-      "thru": "4"
+      "score": "-6",
+      "today": "+1",
+      "thru": "6"
     },
     {
       "position": "\u2014",
       "name": "Harris English",
       "score": "-1",
       "today": "E",
-      "thru": "17"
+      "thru": "F"
     },
     {
       "position": "\u2014",
@@ -233,7 +233,7 @@
       "name": "Hideki Matsuyama",
       "score": "-6",
       "today": "-4",
-      "thru": "15"
+      "thru": "17"
     },
     {
       "position": "\u2014",
@@ -254,21 +254,21 @@
       "name": "Jacob Bridgeman",
       "score": "+1",
       "today": "+3",
-      "thru": "14"
+      "thru": "16"
     },
     {
       "position": "\u2014",
       "name": "Jake Knapp",
       "score": "-6",
       "today": "-1",
-      "thru": "7"
+      "thru": "9"
     },
     {
       "position": "\u2014",
       "name": "Jason Day",
-      "score": "-8",
-      "today": "E",
-      "thru": "4"
+      "score": "-7",
+      "today": "+1",
+      "thru": "6"
     },
     {
       "position": "\u2014",
@@ -287,9 +287,9 @@
     {
       "position": "\u2014",
       "name": "Jordan Spieth",
-      "score": "-4",
-      "today": "-3",
-      "thru": "17"
+      "score": "-5",
+      "today": "-4",
+      "thru": "F"
     },
     {
       "position": "\u2014",
@@ -301,9 +301,9 @@
     {
       "position": "\u2014",
       "name": "Justin Rose",
-      "score": "-8",
-      "today": "E",
-      "thru": "4"
+      "score": "-9",
+      "today": "-1",
+      "thru": "6"
     },
     {
       "position": "\u2014",
@@ -324,7 +324,7 @@
       "name": "Kristoffer Reitan",
       "score": "+2",
       "today": "+5",
-      "thru": "13"
+      "thru": "15"
     },
     {
       "position": "\u2014",
@@ -336,9 +336,9 @@
     {
       "position": "\u2014",
       "name": "Ludvig \u00c5berg",
-      "score": "-6",
-      "today": "-3",
-      "thru": "10"
+      "score": "-4",
+      "today": "-1",
+      "thru": "12"
     },
     {
       "position": "\u2014",
@@ -366,7 +366,7 @@
       "name": "Matt Fitzpatrick",
       "score": "-4",
       "today": "-1",
-      "thru": "12"
+      "thru": "13"
     },
     {
       "position": "\u2014",
@@ -392,16 +392,16 @@
     {
       "position": "\u2014",
       "name": "Max Homa",
-      "score": "-4",
-      "today": "-1",
-      "thru": "12"
+      "score": "-6",
+      "today": "-3",
+      "thru": "14"
     },
     {
       "position": "\u2014",
       "name": "Michael Brennan",
       "score": "-4",
       "today": "-1",
-      "thru": "12"
+      "thru": "14"
     },
     {
       "position": "\u2014",
@@ -436,7 +436,7 @@
       "name": "Nick Taylor",
       "score": "+1",
       "today": "+4",
-      "thru": "12"
+      "thru": "13"
     },
     {
       "position": "\u2014",
@@ -457,14 +457,14 @@
       "name": "Patrick Cantlay",
       "score": "-6",
       "today": "E",
-      "thru": "6"
+      "thru": "7"
     },
     {
       "position": "\u2014",
       "name": "Patrick Reed",
-      "score": "-4",
-      "today": "+2",
-      "thru": "6"
+      "score": "-5",
+      "today": "+1",
+      "thru": "8"
     },
     {
       "position": "\u2014",
@@ -490,16 +490,16 @@
     {
       "position": "\u2014",
       "name": "Rory McIlroy",
-      "score": "-11",
-      "today": "E",
-      "thru": "2"
+      "score": "-10",
+      "today": "+1",
+      "thru": "4"
     },
     {
       "position": "\u2014",
       "name": "Russell Henley",
-      "score": "-8",
-      "today": "-2",
-      "thru": "6"
+      "score": "-9",
+      "today": "-3",
+      "thru": "7"
     },
     {
       "position": "\u2014",
@@ -511,23 +511,23 @@
     {
       "position": "\u2014",
       "name": "Ryan Gerard",
-      "score": "E",
-      "today": "+4",
-      "thru": "8"
+      "score": "+1",
+      "today": "+5",
+      "thru": "10"
     },
     {
       "position": "\u2014",
       "name": "Sam Burns",
       "score": "-8",
       "today": "+2",
-      "thru": "3"
+      "thru": "5"
     },
     {
       "position": "\u2014",
       "name": "Sam Stevens",
       "score": "-2",
       "today": "-2",
-      "thru": "17"
+      "thru": "F"
     },
     {
       "position": "\u2014",
@@ -541,14 +541,14 @@
       "name": "Scottie Scheffler",
       "score": "-9",
       "today": "-2",
-      "thru": "4"
+      "thru": "7"
     },
     {
       "position": "\u2014",
       "name": "Sepp Straka",
-      "score": "+2",
-      "today": "+4",
-      "thru": "14"
+      "score": "+1",
+      "today": "+3",
+      "thru": "16"
     },
     {
       "position": "\u2014",
@@ -560,9 +560,9 @@
     {
       "position": "\u2014",
       "name": "Shane Lowry",
-      "score": "-9",
-      "today": "E",
-      "thru": "3"
+      "score": "-6",
+      "today": "+3",
+      "thru": "5"
     },
     {
       "position": "\u2014",
@@ -576,7 +576,7 @@
       "name": "Sungjae Im",
       "score": "+3",
       "today": "+5",
-      "thru": "15"
+      "thru": "17"
     },
     {
       "position": "\u2014",
@@ -588,16 +588,16 @@
     {
       "position": "\u2014",
       "name": "Tommy Fleetwood",
-      "score": "-2",
-      "today": "+2",
-      "thru": "10"
+      "score": "-1",
+      "today": "+3",
+      "thru": "12"
     },
     {
       "position": "\u2014",
       "name": "Tyrrell Hatton",
       "score": "-6",
       "today": "-2",
-      "thru": "10"
+      "thru": "12"
     },
     {
       "position": "\u2014",
@@ -616,16 +616,16 @@
     {
       "position": "\u2014",
       "name": "Wyndham Clark",
-      "score": "-3",
-      "today": "+1",
-      "thru": "9"
+      "score": "-1",
+      "today": "+3",
+      "thru": "11"
     },
     {
       "position": "\u2014",
       "name": "Xander Schauffele",
       "score": "-5",
       "today": "-1",
-      "thru": "8"
+      "thru": "10"
     },
     {
       "position": "\u2014",
