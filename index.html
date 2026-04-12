@@ -1,161 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Masters Leaderboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masters Leaderboard</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-      background: linear-gradient(180deg, #0b3d2e 0%, #145a32 35%, #f5f3e7 100%);
-      min-height: 100vh;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial;
+  background: linear-gradient(#0b3d2e, #145a32, #f5f3e7);
+}
 
-    .wrap {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+.wrap {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
 
-    h1 {
-      color: white;
-      margin-bottom: 20px;
-    }
+h1 {
+  color: white;
+}
 
-    .board {
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-    }
+.board {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+}
 
-    .header {
-      display: grid;
-      grid-template-columns: 60px 1fr 80px 80px;
-      background: #0f5132;
-      color: white;
-      padding: 12px;
-      font-size: 12px;
-      font-weight: bold;
-    }
+.header, .row {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px 80px;
+  padding: 12px;
+}
 
-    .player {
-      border-top: 1px solid #eee;
-      padding: 12px;
-    }
+.header {
+  background: #0f5132;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
 
-    .row {
-      display: grid;
-      grid-template-columns: 60px 1fr 80px 80px;
-      align-items: center;
-    }
+.player {
+  border-top: 1px solid #eee;
+}
 
-    .name a {
-      font-weight: bold;
-      text-decoration: none;
-      color: black;
-    }
+.name a {
+  text-decoration: none;
+  font-weight: bold;
+  color: black;
+}
 
-    .score {
-      text-align: right;
-      font-weight: bold;
-      color: #0f5132;
-    }
+.score {
+  text-align: right;
+  font-weight: bold;
+  color: #0f5132;
+}
 
-    .thru {
-      text-align: right;
-      color: #666;
-    }
+.thru {
+  text-align: right;
+  color: #666;
+}
 
-    .option {
-      margin-left: 20px;
-      margin-top: 4px;
-    }
+.option {
+  margin-left: 20px;
+  font-size: 14px;
+}
 
-    .option a {
-      text-decoration: none;
-      color: #0066cc;
-      font-size: 14px;
-    }
-  </style>
+.option a {
+  text-decoration: none;
+  color: #0066cc;
+}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <h1>Masters Leaderboard</h1>
+<div class="wrap">
+<h1>Masters Leaderboard</h1>
 
-    <div class="board">
-      <div class="header">
-        <div>POS</div>
-        <div>PLAYER</div>
-        <div>SCORE</div>
-        <div>THRU</div>
+<div class="board">
+<div class="header">
+<div>POS</div>
+<div>PLAYER</div>
+<div>SCORE</div>
+<div>THRU</div>
+</div>
+
+<div id="board">Loading...</div>
+</div>
+</div>
+
+<script>
+function parseScore(s) {
+  if (!s || s === "E") return 0;
+  return parseInt(s);
+}
+
+function parsePos(p) {
+  if (!p) return 999;
+  return parseInt(p.replace("T", "")) || 999;
+}
+
+async function load() {
+  const res = await fetch('data.json?v=' + Date.now());
+  const data = await res.json();
+
+  const players = (data.players || []).sort((a, b) => {
+    const scoreDiff = parseScore(a.score) - parseScore(b.score);
+    if (scoreDiff !== 0) return scoreDiff;
+    return parsePos(a.position) - parsePos(b.position);
+  });
+
+  const container = document.getElementById('board');
+  container.innerHTML = '';
+
+  players.forEach(p => {
+    const block = document.createElement('div');
+    block.className = 'player';
+
+    const row = document.createElement('div');
+    row.className = 'row';
+
+    row.innerHTML = `
+      <div>${p.position}</div>
+      <div class="name">
+        <a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(p.name)}" target="_blank">${p.name}</a>
       </div>
+      <div class="score">${p.score}</div>
+      <div class="thru">${p.thru}</div>
+    `;
 
-      <div id="board"></div>
-    </div>
-  </div>
+    block.appendChild(row);
 
-  <script>
-    async function load() {
-      const res = await fetch('data.json?v=' + Date.now());
-      const data = await res.json();
-    const players = (data.players || []).sort((a, b) => {
-  function parseScore(s) {
-    if (!s || s === "E") return 0;
-    return parseInt(s, 10);
-  }
-
-  function getPos(p) {
-    if (!p.position) return 999;
-    const n = parseInt(String(p.position).replace("T", ""), 10);
-    return isNaN(n) ? 999 : n;
-  }
-
-  const scoreDiff = parseScore(a.score) - parseScore(b.score);
-  if (scoreDiff !== 0) return scoreDiff;
-
-  return getPos(a) - getPos(b);
-});
-
-      const container = document.getElementById('board');
-      container.innerHTML = '';
-
-      players.forEach(p => {
-        const block = document.createElement('div');
-        block.className = 'player';
-
-        const row = document.createElement('div');
-        row.className = 'row';
-
-        row.innerHTML = `
-          <div>${p.position}</div>
-          <div class="name">
-            <a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(p.name)}" target="_blank">${p.name}</a>
-          </div>
-          <div class="score">${p.score}</div>
-          <div class="thru">${p.thru}</div>
-        `;
-
-        block.appendChild(row);
-
-        function option(label, query) {
-          const div = document.createElement('div');
-          div.className = 'option';
-          div.innerHTML = `<a href="https://www.google.com/search?q=${encodeURIComponent(query)}" target="_blank">${label}</a>`;
-          block.appendChild(div);
-        }
-
-        option("Wife or GF", p.name + " wife OR girlfriend");
-        option("Net worth", p.name + " net worth");
-        option("Total PGA earnings", p.name + " PGA earnings");
-
-        container.appendChild(block);
-      });
+    function option(label, query) {
+      const div = document.createElement('div');
+      div.className = 'option';
+      div.innerHTML = `<a href="https://www.google.com/search?q=${encodeURIComponent(query)}" target="_blank">${label}</a>`;
+      block.appendChild(div);
     }
 
-    load();
-  </script>
+    option("Wife or GF", p.name + " wife OR girlfriend");
+    option("Net worth", p.name + " net worth");
+    option("Total PGA earnings", p.name + " PGA earnings");
+
+    container.appendChild(block);
+  });
+}
+
+load();
+</script>
 </body>
 </html>
