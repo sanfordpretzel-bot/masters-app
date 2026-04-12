@@ -47,4 +47,99 @@
 
     .row {
       display: grid;
-      grid-template-columns: 60px 1fr
+      grid-template-columns: 60px 1fr 80px 80px;
+      align-items: center;
+    }
+
+    .name a {
+      font-weight: bold;
+      text-decoration: none;
+      color: black;
+    }
+
+    .score {
+      text-align: right;
+      font-weight: bold;
+      color: #0f5132;
+    }
+
+    .thru {
+      text-align: right;
+      color: #666;
+    }
+
+    .option {
+      margin-left: 20px;
+      margin-top: 4px;
+    }
+
+    .option a {
+      text-decoration: none;
+      color: #0066cc;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>Masters Leaderboard</h1>
+
+    <div class="board">
+      <div class="header">
+        <div>POS</div>
+        <div>PLAYER</div>
+        <div>SCORE</div>
+        <div>THRU</div>
+      </div>
+
+      <div id="board"></div>
+    </div>
+  </div>
+
+  <script>
+    async function load() {
+      const res = await fetch('data.json?v=' + Date.now());
+      const data = await res.json();
+      const players = data.players || [];
+
+      const container = document.getElementById('board');
+      container.innerHTML = '';
+
+      players.forEach(p => {
+        const block = document.createElement('div');
+        block.className = 'player';
+
+        const row = document.createElement('div');
+        row.className = 'row';
+
+        row.innerHTML = `
+          <div>${p.position}</div>
+          <div class="name">
+            <a href="https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(p.name)}" target="_blank">${p.name}</a>
+          </div>
+          <div class="score">${p.score}</div>
+          <div class="thru">${p.thru}</div>
+        `;
+
+        block.appendChild(row);
+
+        function option(label, query) {
+          const div = document.createElement('div');
+          div.className = 'option';
+          div.innerHTML = `<a href="https://www.google.com/search?q=${encodeURIComponent(query)}" target="_blank">${label}</a>`;
+          block.appendChild(div);
+        }
+
+        option("Wife or GF", p.name + " wife OR girlfriend");
+        option("Net worth", p.name + " net worth");
+        option("Total PGA earnings", p.name + " PGA earnings");
+
+        container.appendChild(block);
+      });
+    }
+
+    load();
+  </script>
+</body>
+</html>
