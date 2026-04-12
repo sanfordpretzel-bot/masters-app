@@ -40,8 +40,8 @@ jobs:
 
           PAGES = [
               {
-                  "name": "Masters.com leaderboard",
-                  "url": "https://www.masters.com/en_US/scores/feeds/2026/scores.json",
+                  "name": "Masters.com LIVE scores feed",
+                  "url": "https://www.masters.com/en_US/scores/feeds/scores.json",
                   "kind": "json",
               },
               {
@@ -56,29 +56,25 @@ jobs:
               },
           ]
 
-
-          def clean(text: str) -> str:
+          def clean(text):
               return re.sub(r"\s+", " ", (text or "").replace("\xa0", " ")).strip()
 
-
-          def normalize_thru(value: str) -> str:
+          def normalize_thru(value):
               text = clean(value)
               if not text:
                   return "—"
               lower = text.lower()
               if lower in {"f", "fin", "finish", "finished"}:
                   return "F"
-              return text.upper() if len(text) <= 3 else text
+              return text
 
-
-          def parse_position(value: str) -> int:
+          def parse_position(value):
               text = clean(value)
               if not text:
                   return 9999
               text = re.sub(r"^T", "", text, flags=re.I)
               m = re.search(r"\d+", text)
               return int(m.group()) if m else 9999
-
 
           def dedupe(players):
               seen = set()
@@ -91,18 +87,15 @@ jobs:
                   if key in seen:
                       continue
                   seen.add(key)
-                  out.append(
-                      {
-                          "position": clean(player.get("position", "")) or "—",
-                          "name": name,
-                          "score": clean(player.get("score", "")) or "E",
-                          "today": clean(player.get("today", "")) or "E",
-                          "thru": normalize_thru(player.get("thru", "")),
-                      }
-                  )
+                  out.append({
+                      "position": clean(player.get("position", "")) or "—",
+                      "name": name,
+                      "score": clean(player.get("score", "")) or "E",
+                      "today": clean(player.get("today", "")) or "E",
+                      "thru": normalize_thru(player.get("thru", "")),
+                  })
               out.sort(key=lambda p: (parse_position(p["position"]), p["name"]))
               return out
-
 
           def from_masters_json(payload):
               candidates = []
@@ -138,7 +131,14 @@ jobs:
                   position = clean(row.get("position") or row.get("pos") or row.get("rank"))
                   score = clean(row.get("score") or row.get("total") or row.get("to_par"))
                   today = clean(row.get("today") or row.get("today_score") or row.get("round_score"))
-                  thru = clean(row.get("thru") or row.get("through") or row.get("hole"))
+
+                  # KEY FIX: handle live hole vs tee time
+                  thru = clean(
+                      row.get("thru")
+                      or row.get("through")
+                      or row.get("hole")
+                      or row.get("status")
+                  )
 
                   players.append({
                       "position": position,
@@ -150,14 +150,12 @@ jobs:
 
               return dedupe(players)
 
-
           def from_html_table(html):
               soup = BeautifulSoup(html, "html.parser")
               players = []
 
               for tr in soup.select("tr"):
                   cells = [clean(td.get_text(" ", strip=True)) for td in tr.select("th, td")]
-
                   if len(cells) < 4:
                       continue
 
@@ -167,7 +165,7 @@ jobs:
 
                   name = ""
                   for cell in cells[1:4]:
-                      if len(cell.split()) >= 2 and any(ch.isalpha() for ch in cell):
+                      if len(cell.split()) >= 2:
                           name = cell
                           break
 
@@ -181,7 +179,6 @@ jobs:
                   if name in cells:
                       idx = cells.index(name)
                       after = cells[idx + 1 : idx + 5]
-
                       if after:
                           score = after[0] if len(after) > 0 else ""
                           today = after[1] if len(after) > 1 else ""
@@ -197,39 +194,30 @@ jobs:
 
               return dedupe(players)
 
-
           def fetch_players():
               headers = {
                   "User-Agent": "Mozilla/5.0",
                   "Accept-Language": "en-US,en;q=0.9",
               }
 
-              errors = []
-
               for source in PAGES:
                   try:
-                      response = requests.get(source["url"], timeout=25, headers=headers)
-                      response.raise_for_status()
+                      r = requests.get(source["url"], timeout=25, headers=headers)
+                      r.raise_for_status()
 
                       if source["kind"] == "json":
-                          players = from_masters_json(response.json())
+                          players = from_masters_json(r.json())
                       else:
-                          players = from_html_table(response.text)
+                          players = from_html_table(r.text)
 
                       if players:
                           return source["name"], source["url"], players
+                  except:
+                      continue
 
-                      errors.append(f"{source['name']}: no players parsed")
-
-                  except Exception as exc:
-                      errors.append(f"{source['name']}: {exc}")
-
-              raise RuntimeError("; ".join(errors))
-
+              raise RuntimeError("No valid data source")
 
           def main():
-              existing = json.loads(DATA_FILE.read_text()) if DATA_FILE.exists() else {"players": []}
-
               try:
                   source_name, source_url, players = fetch_players()
 
@@ -237,21 +225,23 @@ jobs:
                       "updated_at": datetime.now(timezone.utc).isoformat(),
                       "source_name": source_name,
                       "source_url": source_url,
-                      "note": "Refreshed automatically by GitHub Actions.",
+                      "note": "Auto-updated",
                       "players": players,
                   }
 
-              except Exception as exc:
-                  payload = existing
-                  payload["updated_at"] = datetime.now(timezone.utc).isoformat()
-                  payload["note"] = f"Refresh failed. Showing last good data. {exc}"
+              except Exception as e:
+                  payload = {
+                      "updated_at": datetime.now(timezone.utc).isoformat(),
+                      "note": f"Failed update: {e}",
+                      "players": [],
+                  }
 
               DATA_FILE.write_text(json.dumps(payload, indent=2))
-
 
           if __name__ == "__main__":
               main()
           PY
+
           python refresh_data.py
 
       - name: Commit updated data
@@ -259,9 +249,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data.json
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-            exit 0
-          fi
-          git commit -m "Update leaderboard data"
+          git commit -m "Update leaderboard" || exit 0
           git push
