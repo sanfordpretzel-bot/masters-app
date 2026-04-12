@@ -1,185 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Masters Leaderboard</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --line: #1f2937;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-      --accent: #16a34a;
-      --accent2: #22c55e;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(180deg, #052e16, var(--bg));
-      color: var(--text);
-      min-height: 100vh;
-    }
-    .wrap {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px 16px 40px;
-    }
-    .hero {
-      background: rgba(17, 24, 39, 0.92);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 16px;
-      backdrop-filter: blur(6px);
-    }
-    h1 { margin: 0 0 6px; font-size: 1.9rem; }
-    .sub { color: var(--muted); font-size: 0.95rem; }
-    .controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 14px;
-    }
-    button, .button-link {
-      appearance: none;
-      border: 0;
-      background: var(--accent);
-      color: white;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    button.secondary, .button-link.secondary {
-      background: #1f2937;
-      border: 1px solid #374151;
-    }
-    .card {
-      background: rgba(17, 24, 39, 0.94);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px;
-      overflow: hidden;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 14px 12px;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-      font-size: 0.96rem;
-    }
-    th { color: var(--muted); font-weight: 600; }
-    tr:last-child td { border-bottom: 0; }
-    a.player {
-      color: #dcfce7;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    a.player:hover { text-decoration: underline; }
-    .status {
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-    .pill {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(22, 163, 74, 0.14);
-      color: #bbf7d0;
-      font-size: 0.85rem;
-      border: 1px solid rgba(34,197,94,0.2);
-    }
-    .muted { color: var(--muted); }
-    .footer { margin-top: 14px; color: var(--muted); font-size: 0.9rem; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="hero">
-      <h1>Masters Leaderboard</h1>
-      <div class="sub">Tap any player name to open Wikipedia in a new tab.</div>
-      <div class="controls">
-        <button id="refreshBtn">Refresh page data</button>
-        <a class="button-link secondary" href="https://www.masters.com/leaderboard" target="_blank" rel="noopener noreferrer">Official leaderboard</a>
-      </div>
-      <div class="pill" id="updatedPill">Loading leaderboard…</div>
-      <div class="status" id="status"></div>
-    </div>
+<script>
+async function loadLeaderboard() {
+  const response = await fetch('data.json');
+  const players = await response.json();
 
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 12%">Pos</th>
-            <th>Player</th>
-            <th style="width: 14%">Score</th>
-            <th style="width: 14%">Today</th>
-            <th style="width: 16%">Thru</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
+  const container = document.getElementById('leaderboard');
 
-    <div class="footer">
-      This site reads a static <code>data.json</code> file in the repo. A GitHub Action can refresh that file on a schedule.
-    </div>
-  </div>
+  players.forEach(player => {
+    const name = player.name;
 
-  <script>
-    function wikiUrl(name) {
-      return `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(name)}`;
+    const block = document.createElement('div');
+    block.style.marginBottom = '15px';
+
+    // Player name (Wikipedia link)
+    const title = document.createElement('div');
+    title.innerHTML = `<a href="https://en.wikipedia.org/wiki/${encodeURIComponent(name)}" target="_blank"><strong>${name}</strong></a>`;
+    block.appendChild(title);
+
+    // Helper to create indented links
+    function createOption(label, query) {
+      const row = document.createElement('div');
+      row.style.marginLeft = '20px';
+      row.innerHTML = `<a href="https://www.google.com/search?q=${encodeURIComponent(query)}" target="_blank">${label}</a>`;
+      return row;
     }
 
-    function render(data) {
-      const rows = document.getElementById('rows');
-      const status = document.getElementById('status');
-      const updatedPill = document.getElementById('updatedPill');
-      rows.innerHTML = '';
+    block.appendChild(createOption("Wife or GF", name + " wife"));
+    block.appendChild(createOption("Net worth", name + " net worth"));
+    block.appendChild(createOption("Total PGA earnings", name + " PGA earnings"));
 
-      updatedPill.textContent = data.updated_at
-        ? `Updated: ${new Date(data.updated_at).toLocaleString()}`
-        : 'Showing saved leaderboard data';
+    container.appendChild(block);
+  });
+}
 
-      const sourceText = data.source_url ? `Source: ${data.source_name || 'Leaderboard source'}` : 'Saved leaderboard file';
-      status.textContent = `${sourceText}${data.note ? ' · ' + data.note : ''}`;
-
-      for (const p of (data.players || [])) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${p.position || ''}</td>
-          <td><a class="player" href="${wikiUrl(p.name)}" target="_blank" rel="noopener noreferrer">${p.name || ''}</a></td>
-          <td>${p.score || ''}</td>
-          <td>${p.today || ''}</td>
-          <td>${p.thru || ''}</td>
-        `;
-        rows.appendChild(tr);
-      }
-    }
-
-    async function loadBoard() {
-      const res = await fetch(`./data.json?v=${Date.now()}`);
-      if (!res.ok) throw new Error('Could not load data.json');
-      const data = await res.json();
-      render(data);
-    }
-
-    document.getElementById('refreshBtn').addEventListener('click', loadBoard);
-    loadBoard().catch(err => {
-      document.getElementById('status').textContent = err.message;
-      document.getElementById('updatedPill').textContent = 'Could not load leaderboard';
-    });
-  </script>
-</body>
-</html>
+loadLeaderboard();
+</script>
