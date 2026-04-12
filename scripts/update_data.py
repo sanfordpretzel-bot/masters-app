@@ -1,4 +1,4 @@
-import json
+import jsn
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_FILE = ROOT / "data.json"
+
 PAGES = [
     {
         "name": "Masters.com leaderboard",
@@ -88,10 +89,12 @@ def from_masters_json(payload):
                     if isinstance(nested, list):
                         candidates = nested
                         break
+
     players = []
     for row in candidates:
         if not isinstance(row, dict):
             continue
+
         name = clean(
             row.get("name")
             or row.get("player_name")
@@ -99,12 +102,15 @@ def from_masters_json(payload):
             or row.get("display_name")
             or f"{row.get('first_name', '')} {row.get('last_name', '')}"
         )
+
         if len(name.split()) < 2:
             continue
+
         position = clean(row.get("position") or row.get("pos") or row.get("rank"))
         score = clean(row.get("score") or row.get("total") or row.get("to_par"))
         today = clean(row.get("today") or row.get("today_score") or row.get("round_score"))
         thru = clean(row.get("thru") or row.get("through") or row.get("hole"))
+
         players.append({
             "position": position,
             "name": name,
@@ -112,6 +118,7 @@ def from_masters_json(payload):
             "today": today,
             "thru": thru,
         })
+
     return dedupe(players)
 
 
@@ -121,6 +128,7 @@ def from_html_table(html):
 
     for tr in soup.select("tr"):
         cells = [clean(td.get_text(" ", strip=True)) for td in tr.select("th, td")]
+
         if len(cells) < 4:
             continue
 
@@ -133,6 +141,7 @@ def from_html_table(html):
             if len(cell.split()) >= 2 and any(ch.isalpha() for ch in cell):
                 name = cell
                 break
+
         if not name:
             continue
 
@@ -143,6 +152,7 @@ def from_html_table(html):
         if name in cells:
             idx = cells.index(name)
             after = cells[idx + 1 : idx + 5]
+
             if after:
                 score = after[0] if len(after) > 0 else ""
                 today = after[1] if len(after) > 1 else ""
@@ -166,26 +176,34 @@ def fetch_players():
     }
 
     errors = []
+
     for source in PAGES:
         try:
             response = requests.get(source["url"], timeout=25, headers=headers)
             response.raise_for_status()
+
             if source["kind"] == "json":
                 players = from_masters_json(response.json())
             else:
                 players = from_html_table(response.text)
+
             if players:
                 return source["name"], source["url"], players
+
             errors.append(f"{source['name']}: no players parsed")
+
         except Exception as exc:
             errors.append(f"{source['name']}: {exc}")
+
     raise RuntimeError("; ".join(errors))
 
 
 def main():
     existing = json.loads(DATA_FILE.read_text()) if DATA_FILE.exists() else {"players": []}
+
     try:
         source_name, source_url, players = fetch_players()
+
         payload = {
             "updated_at": datetime.now(timezone.utc).isoformat(),
             "source_name": source_name,
@@ -193,6 +211,7 @@ def main():
             "note": "Refreshed automatically by GitHub Actions.",
             "players": players,
         }
+
     except Exception as exc:
         payload = existing
         payload["updated_at"] = datetime.now(timezone.utc).isoformat()
