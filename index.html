@@ -101,7 +101,23 @@
     async function load() {
       const res = await fetch('data.json?v=' + Date.now());
       const data = await res.json();
-      const players = data.players || [];
+    const players = (data.players || []).sort((a, b) => {
+  function parseScore(s) {
+    if (!s || s === "E") return 0;
+    return parseInt(s, 10);
+  }
+
+  function getPos(p) {
+    if (!p.position) return 999;
+    const n = parseInt(String(p.position).replace("T", ""), 10);
+    return isNaN(n) ? 999 : n;
+  }
+
+  const scoreDiff = parseScore(a.score) - parseScore(b.score);
+  if (scoreDiff !== 0) return scoreDiff;
+
+  return getPos(a) - getPos(b);
+});
 
       const container = document.getElementById('board');
       container.innerHTML = '';
