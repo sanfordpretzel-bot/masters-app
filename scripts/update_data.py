@@ -1,1 +1,207 @@
+Python
 
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+
+import requests
+from bs4 import BeautifulSoup
+
+ROOT = Path(__file__).resolve().parents[1]
+DATA_FILE = ROOT / "data.json"
+PAGES = [
+    {
+        "name": "Masters.com leaderboard",
+        "url": "https://www.masters.com/en_US/scores/feeds/2026/scores.json",
+        "kind": "json",
+    },
+    {
+        "name": "Masters.com leaderboard page",
+        "url": "https://www.masters.com/leaderboard",
+        "kind": "html",
+    },
+    {
+        "name": "ESPN Masters leaderboard",
+        "url": "https://www.espn.com/golf/leaderboard?season=2025&tournamentId=401811941",
+        "kind": "html",
+    },
+]
+
+
+def clean(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "").replace("\xa0", " ")).strip()
+
+
+def normalize_thru(value: str) -> str:
+    text = clean(value)
+    if not text:
+        return "—"
+    lower = text.lower()
+    if lower in {"f", "fin", "finish", "finished"}:
+        return "F"
+    return text.upper() if len(text) <= 3 else text
+
+
+def parse_position(value: str) -> int:
+    text = clean(value)
+    if not text:
+        return 9999
+    text = re.sub(r"^T", "", text, flags=re.I)
+    m = re.search(r"\d+", text)
+    return int(m.group()) if m else 9999
+
+
+def dedupe(players):
+    seen = set()
+    out = []
+    for player in players:
+        name = clean(player.get("name", ""))
+        if not name:
+            continue
+        key = (player.get("position", ""), name)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(
+            {
+                "position": clean(player.get("position", "")) or "—",
+                "name": name,
+                "score": clean(player.get("score", "")) or "E",
+                "today": clean(player.get("today", "")) or "E",
+                "thru": normalize_thru(player.get("thru", "")),
+            }
+        )
+    out.sort(key=lambda p: (parse_position(p["position"]), p["name"]))
+    return out
+
+
+def from_masters_json(payload):
+    candidates = []
+    if isinstance(payload, dict):
+        for key in ("leaderboard", "players", "competitors", "entries"):
+            value = payload.get(key)
+            if isinstance(value, list):
+                candidates = value
+                break
+            if isinstance(value, dict):
+                for nested_key in ("players", "competitors", "entries"):
+                    nested = value.get(nested_key)
+                    if isinstance(nested, list):
+                        candidates = nested
+                        break
+    players = []
+    for row in candidates:
+        if not isinstance(row, dict):
+            continue
+        name = clean(
+            row.get("name")
+            or row.get("player_name")
+            or row.get("full_name")
+            or row.get("display_name")
+            or f"{row.get('first_name', '')} {row.get('last_name', '')}"
+        )
+        if len(name.split()) < 2:
+            continue
+        position = clean(row.get("position") or row.get("pos") or row.get("rank"))
+        score = clean(row.get("score") or row.get("total") or row.get("to_par"))
+        today = clean(row.get("today") or row.get("today_score") or row.get("round_score"))
+        thru = clean(row.get("thru") or row.get("through") or row.get("hole"))
+        players.append({
+            "position": position,
+            "name": name,
+            "score": score,
+            "today": today,
+            "thru": thru,
+        })
+    return dedupe(players)
+
+
+def from_html_table(html):
+    soup = BeautifulSoup(html, "html.parser")
+    players = []
+
+    for tr in soup.select("tr"):
+        cells = [clean(td.get_text(" ", strip=True)) for td in tr.select("th, td")]
+        if len(cells) < 4:
+            continue
+
+        pos = cells[0]
+        if pos.lower() in {"pos", "position"}:
+            continue
+
+        name = ""
+        for cell in cells[1:4]:
+            if len(cell.split()) >= 2 and any(ch.isalpha() for ch in cell):
+                name = cell
+                break
+        if not name:
+            continue
+
+        score = ""
+        today = ""
+        thru = ""
+
+        if name in cells:
+            idx = cells.index(name)
+            after = cells[idx + 1 : idx + 5]
+            if after:
+                score = after[0] if len(after) > 0 else ""
+                today = after[1] if len(after) > 1 else ""
+                thru = after[2] if len(after) > 2 else ""
+
+        players.append({
+            "position": pos,
+            "name": name,
+            "score": score,
+            "today": today,
+            "thru": thru,
+        })
+
+    return dedupe(players)
+
+
+def fetch_players():
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    errors = []
+    for source in PAGES:
+        try:
+            response = requests.get(source["url"], timeout=25, headers=headers)
+            response.raise_for_status()
+            if source["kind"] == "json":
+                players = from_masters_json(response.json())
+            else:
+                players = from_html_table(response.text)
+            if players:
+                return source["name"], source["url"], players
+            errors.append(f"{source['name']}: no players parsed")
+        except Exception as exc:
+            errors.append(f"{source['name']}: {exc}")
+    raise RuntimeError("; ".join(errors))
+
+
+def main():
+    existing = json.loads(DATA_FILE.read_text()) if DATA_FILE.exists() else {"players": []}
+    try:
+        source_name, source_url, players = fetch_players()
+        payload = {
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "source_name": source_name,
+            "source_url": source_url,
+            "note": "Refreshed automatically by GitHub Actions.",
+            "players": players,
+        }
+    except Exception as exc:
+        payload = existing
+        payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+        payload["note"] = f"Refresh failed. Showing last good data. {exc}"
+
+    DATA_FILE.write_text(json.dumps(payload, indent=2))
+
+
+if __name__ == "__main__":
+    main()
